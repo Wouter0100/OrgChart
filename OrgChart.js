@@ -207,6 +207,7 @@ var Node = function(id, parent, contype, txt, bold, url, linecolor, fillcolor, t
 		this.botradius = curbotradius;
 		this.shadowOffsetX = curshadowOffsetX;
 		this.shadowOffsetY = curshadowOffsetY;
+		this.clickHandler = undefined;
 	};
 
 
@@ -254,6 +255,16 @@ orgChart.prototype.setColor = function (l, f, t, c)
 	if (f !== undefined && f !== '') { boxFillColor = f; }
 	if (t !== undefined && t !== '') { textColor    = t; }
 	if (c !== undefined && c !== '') { lineColor    = c; }
+};
+
+orgChart.prototype.setClickHandler = function (id, callback)
+{
+	if (id === undefined || id === '') { console.log('Callback node ID not set'); return; }
+	if (typeof callback !== 'function') { console.log('Callback not set'); return; }
+
+	if (nodes[id] === undefined) { console.log('Callback node does not exist'); return; }
+
+	nodes[id].clickHandler = callback;
 };
 
 orgChart.prototype.addNode = function (id, parent, ctype, text, bold, url, linecolor, fillcolor, textcolor, img, imgalign)
@@ -311,6 +322,11 @@ orgChart.prototype.addNode = function (id, parent, ctype, text, bold, url, linec
 	nodes[nodes.length] = n;
 };
 
+orgChart.prototype.clearNodes = function ()
+{
+	nodes = [];
+};
+
 orgChart.prototype.drawChart = function (id, align, fit)
 {
 	// siblings may be added. Reset all positions first:
@@ -324,12 +340,12 @@ orgChart.prototype.drawChart = function (id, align, fit)
 	}
 
 	drawChartPriv(id, true, align, fit);
-}
+};
 
 orgChart.prototype.redrawChart = function (id)
 {
 	drawChartPriv(id, false);
-}
+};
 
 //////////////////////
 // Internal functions:
@@ -463,7 +479,7 @@ orgChartMouseMove = function(event)
 	}
 
 	i = getNodeAt(x, y);
-	if (i >= 0 && nodes[i].url.length > 0){
+	if (i >= 0 && (nodes[i].url.length > 0 || nodes[i].clickHandler !== undefined)){
 		document.body.style.cursor = 'pointer';
 	}else{
 		document.body.style.cursor = 'default';
@@ -497,6 +513,10 @@ orgChartClick = function(event, offsetx, offsety)
 
 	i = getNodeAt(x, y);
 	if (i >= 0){
+		if (nodes[i].clickHandler !== undefined) {
+			nodes[i].clickHandler(nodes[i]);
+		}
+
 		if (nodes[i].url.length > 0){
 			document.body.style.cursor = 'default';
 			i1 = nodes[i].url.indexOf('://');
